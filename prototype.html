@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>驿路通 - 一站式商务接待服务</title>
+<style>
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f3f0;
+    color: #2c2c2c;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ===== Top Nav ===== */
+  .nav { 
+    background: #1a1a2e; color: #e8d5b7; padding: 12px 20px; 
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+  .nav-tagline { font-size: 12px; opacity: 0.7; }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff; text-align: center; padding: 60px 20px 80px;
+  }
+  .hero h1 { font-size: 32px; font-weight: 700; margin-bottom: 12px; letter-spacing: 1px; }
+  .hero p { font-size: 16px; opacity: 0.85; max-width: 500px; margin: 0 auto 32px; }
+  .hero-cta {
+    display: inline-block; background: #c9a96e; color: #1a1a2e;
+    padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600;
+    text-decoration: none; letter-spacing: 1px; cursor: pointer; border: none;
+    transition: transform 0.2s;
+  }
+  .hero-cta:hover { transform: translateY(-2px); }
+
+  /* ===== Section titles ===== */
+  .section-title {
+    text-align: center; padding: 48px 20px 24px; font-size: 22px; font-weight: 700;
+    color: #1a1a2e; letter-spacing: 1px;
+  }
+  .section-sub {
+    text-align: center; font-size: 14px; color: #888; margin-top: -16px; margin-bottom: 32px;
+  }
+
+  /* ===== Service Cards ===== */
+  .services { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+  .service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+  .service-card {
+    background: #fff; border-radius: 10px; padding: 28px 24px;
+    border: 1px solid #e8e0d5; cursor: pointer; transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .service-card:hover { border-color: #c9a96e; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .service-card.selected { border-color: #c9a96e; background: #fdf8f0; box-shadow: 0 0 0 2px #c9a96e; }
+  .service-icon { font-size: 36px; margin-bottom: 12px; }
+  .service-card h3 { font-size: 16px; margin-bottom: 6px; color: #1a1a2e; }
+  .service-card p { font-size: 13px; color: #888; }
+  .service-check {
+    position: absolute; top: 12px; right: 12px; width: 22px; height: 22px;
+    border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent; transition: all 0.2s;
+  }
+  .service-card.selected .service-check { background: #c9a96e; border-color: #c9a96e; color: #fff; }
+
+  /* ===== Booking Modal / Flow ===== */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 200; display: none;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; width: 92%; max-width: 520px;
+    max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-header {
+    padding: 24px 24px 0; display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h2 { font-size: 20px; color: #1a1a2e; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: #f0f0f0;
+    cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ===== Steps indicator ===== */
+  .steps { display: flex; padding: 20px 24px; gap: 8px; align-items: center; }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%; background: #e8e0d5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #999; flex-shrink: 0;
+  }
+  .step-dot.active { background: #c9a96e; color: #1a1a2e; }
+  .step-dot.done { background: #1a1a2e; color: #c9a96e; }
+  .step-line { flex: 1; height: 2px; background: #e8e0d5; min-width: 20px; }
+  .step-line.done { background: #1a1a2e; }
+
+  /* ===== Step content ===== */
+  .step-content { padding: 0 24px 32px; display: none; }
+  .step-content.active { display: block; }
+
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 14px; font-family: inherit; transition: border-color 0.2s;
+    background: #fafaf8;
+  }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    outline: none; border-color: #c9a96e;
+  }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+
+  /* Service selection in step 1 */
+  .svc-option {
+    display: flex; align-items: center; gap: 12px; padding: 14px;
+    border: 1px solid #e8e0d5; border-radius: 8px; margin-bottom: 10px;
+    cursor: pointer; transition: all 0.2s; background: #fafaf8;
+  }
+  .svc-option:hover { border-color: #c9a96e; }
+  .svc-option.selected { border-color: #c9a96e; background: #fdf8f0; }
+  .svc-option .svc-name { font-weight: 600; font-size: 14px; flex: 1; }
+  .svc-option .svc-price { font-size: 13px; color: #c9a96e; font-weight: 600; }
+
+  .btn {
+    display: inline-block; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none; letter-spacing: 1px; transition: all 0.2s;
+  }
+  .btn-primary { background: #c9a96e; color: #1a1a2e; width: 100%; }
+  .btn-primary:hover { background: #b8944f; }
+  .btn-secondary { background: transparent; color: #888; border: 1px solid #ddd; }
+  .btn-row { display: flex; gap: 12px; margin-top: 24px; }
+  .btn-row .btn { flex: 1; text-align: center; }
+
+  /* ===== Confirmation ===== */
+  .confirm-card {
+    background: #fdf8f0; border: 1px solid #c9a96e; border-radius: 10px; padding: 20px;
+    margin-bottom: 16px;
+  }
+  .confirm-card h4 { font-size: 15px; color: #1a1a2e; margin-bottom: 12px; }
+  .confirm-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .confirm-row .label { color: #888; }
+  .confirm-row .val { color: #2c2c2c; font-weight: 500; }
+  .confirm-total {
+    border-top: 1px solid #e8e0d5; margin-top: 12px; padding-top: 12px;
+    display: flex; justify-content: space-between; font-size: 16px; font-weight: 700;
+  }
+
+  /* ===== Trust Section ===== */
+  .trust { max-width: 900px; margin: 0 auto; padding: 40px 20px 60px; }
+  .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center; }
+  .trust-item { padding: 24px; }
+  .trust-num { font-size: 32px; font-weight: 700; color: #c9a96e; }
+  .trust-label { font-size: 13px; color: #888; margin-top: 4px; }
+
+  /* ===== Footer ===== */
+  .footer {
+    background: #1a1a2e; color: #e8d5b7; text-align: center;
+    padding: 32px 20px; font-size: 13px;
+  }
+
+  /* ===== Detail Modal ===== */
+  .detail-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); z-index: 200; display: none;
+    align-items: flex-end; justify-content: center;
+  }
+  .detail-overlay.active { display: flex; }
+  .detail-panel {
+    background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 600px;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .detail-handle {
+    width: 36px; height: 4px; background: #ddd; border-radius: 2px;
+    margin: 12px auto 0;
+  }
+  .detail-hero {
+    padding: 28px 24px 20px; text-align: center;
+    background: linear-gradient(180deg, #fdf8f0 0%, #fff 100%);
+  }
+  .detail-hero .d-icon { font-size: 52px; margin-bottom: 12px; }
+  .detail-hero h2 { font-size: 22px; color: #1a1a2e; margin-bottom: 6px; }
+  .detail-hero .d-sub { font-size: 14px; color: #888; }
+  .detail-body { padding: 0 24px 24px; }
+  
+  /* Package cards */
+  .package-card {
+    background: #fafaf8; border: 1px solid #e8e0d5; border-radius: 10px;
+    padding: 18px; margin-bottom: 12px; position: relative;
+  }
+  .package-card.featured { border-color: #c9a96e; background: #fdf8f0; }
+  .package-badge {
+    position: absolute; top: -10px; right: 16px; background: #c9a96e; color: #1a1a2e;
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+  }
+  .package-card h4 { font-size: 15px; color: #1a1a2e; margin-bottom: 4px; }
+  .package-card .p-price { font-size: 20px; font-weight: 700; color: #c9a96e; margin-bottom: 8px; }
+  .package-card .p-price span { font-size: 13px; font-weight: 400; color: #888; }
+  .package-features { list-style: none; padding: 0; }
+  .package-features li {
+    font-size: 13px; color: #666; padding: 4px 0; padding-left: 18px; position: relative;
+  }
+  .package-features li::before { content: '✓'; position: absolute; left: 0; color: #c9a96e; font-weight: 700; }
+  
+  /* Detail section */
+  .detail-section { margin-bottom: 20px; }
+  .detail-section h3 {
+    font-size: 15px; color: #1a1a2e; margin-bottom: 10px;
+    padding-bottom: 8px; border-bottom: 1px solid #eee;
+  }
+  .highlight-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .highlight-item {
+    background: #fafaf8; border-radius: 8px; padding: 14px; text-align: center;
+  }
+  .highlight-item .h-icon { font-size: 24px; margin-bottom: 4px; }
+  .highlight-item .h-label { font-size: 12px; color: #666; }
+  
+  .detail-cta {
+    position: sticky; bottom: 0; background: #fff; padding: 16px 24px;
+    border-top: 1px solid #eee; display: flex; gap: 10px;
+  }
+  .detail-cta .btn { flex: 1; text-align: center; }
+  .detail-content { display: none; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 26px; }
+    .trust-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .trust-num { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav class="nav">
+  <div>
+    <div class="nav-logo">驿 路 通</div>
+  </div>
+  <div class="nav-tagline">本地商务资源 · 一站对接</div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <h1>商务接待 · 一站搞定</h1>
+  <p>接机、酒店、宴请、出行 —— 把接待交给专业的人，您只管谈生意</p>
+  <button class="hero-cta" onclick="openBooking()">立即预约接待服务</button>
+</section>
+
+<!-- ===== SERVICE CARDS ===== -->
+<h2 class="section-title">我们的服务</h2>
+<p class="section-sub">点击任意服务卡片开始预订</p>
+
+<section class="services">
+  <div class="service-grid">
+    <div class="service-card" onclick="openDetail('airport')">
+      <div class="service-icon">&#9992;</div>
+      <h3>接送机 / 接送站</h3>
+      <p>商务专车准时接驾 · MPV舒适车型 · 举牌迎宾可选</p>
+    </div>
+    <div class="service-card" onclick="openDetail('hotel')">
+      <div class="service-icon">&#127968;</div>
+      <h3>酒店预订</h3>
+      <p>中高端酒店协议价 · 比平台便宜15%起 · 灵活退改</p>
+    </div>
+    <div class="service-card" onclick="openDetail('banquet')">
+      <div class="service-icon">&#127860;</div>
+      <h3>商务宴请场地</h3>
+      <p>包房预订 · 菜单定制 · KTV/会所安排 · 一条龙服务</p>
+    </div>
+    <div class="service-card" onclick="openDetail('reception')">
+      <div class="service-icon">&#128188;</div>
+      <h3>企业接待外包</h3>
+      <p>月度套餐 · 专属接待管家 · 开正规发票 · 签合同</p>
+    </div>
+    <div class="service-card" onclick="openDetail('travel')">
+      <div class="service-icon">&#127905;</div>
+      <h3>景区/团建地接</h3>
+      <p>门票代订 · 包车服务 · 导游安排 · 团队用餐</p>
+    </div>
+    <div class="service-card" onclick="openDetail('fleet')">
+      <div class="service-icon">&#128663;</div>
+      <h3>车队后市场服务</h3>
+      <p>保养维修 · 保险续保 · 二手车置换 · 渠道价</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRUST ===== -->
+<h2 class="section-title">为什么选择驿路通</h2>
+<section class="trust">
+  <div class="trust-grid">
+    <div class="trust-item">
+      <div class="trust-num">10+</div>
+      <div class="trust-label">年本地资源积累</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">50+</div>
+      <div class="trust-label">合作酒店 / 场地</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">2000+</div>
+      <div class="trust-label">服务企业客户</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SERVICE DETAIL MODALS ===== -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-handle"></div>
+
+    <!-- ===== 1. Airport ===== -->
+    <div class="detail-content" id="detail-airport">
+      <div class="detail-hero">
+        <div class="d-icon">&#9992;</div>
+        <h2>接送机 / 接送站</h2>
+        <p class="d-sub">商务专车准时接驾，让客户从落地开始感受专业</p>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>服务亮点</h3>
+          <div class="highlight-list">
+            <div class="highlight-item"><div class="h-icon">&#128652;</div><div class="h-label">商务MPV车型</div></div>
+            <div class="highlight-item"><div class="h-icon">&#9200;</div><div class="h-label">延误免费等</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128206;</div><div class="h-label">举牌迎宾</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128179;</div><div class="h-label">可开发票</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>套餐选择</h3>
+          <div class="package-card">
+            <h4>经济接机</h4>
+            <div class="p-price">￥200<span>/次</span></div>
+            <ul class="package-features">
+              <li>舒适轿车（帕萨特/凯美瑞级）</li><li>机场/高铁站接驾</li><li>等候30分钟免费</li>
+            </ul>
+          </div>
+          <div class="package-card featured">
+            <div class="package-badge">推荐</div>
+            <h4>商务接机</h4>
+            <div class="p-price">￥400<span>/次</span></div>
+            <ul class="package-features">
+              <li>别克GL8商务车</li><li>举牌迎宾、帮提行李</li><li>延误免费等候</li><li>车内矿泉水+充电线</li>
+            </ul>
+          </div>
+          <div class="package-card">
+            <h4>贵宾礼遇</h4>
+            <div class="p-price">￥800<span>/次</span></div>
+            <ul class="package-features">
+              <li>埃尔法/奔驰V级</li><li>VIP通道接机</li><li>鲜花迎宾可选</li><li>全程管家服务</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detail-cta">
+        <button class="btn btn-secondary" onclick="closeDetail()">返回</button>
+        <button class="btn btn-primary" onclick="detailToBook('airport')">立即预约接机</button>
+      </div>
+    </div>
+
+    <!-- ===== 2. Hotel ===== -->
+    <div class="detail-content" id="detail-hotel">
+      <div class="detail-hero">
+        <div class="d-icon">&#127968;</div>
+        <h2>酒店预订</h2>
+        <p class="d-sub">本地中高端酒店协议价，比平台便宜15%起</p>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>服务亮点</h3>
+          <div class="highlight-list">
+            <div class="highlight-item"><div class="h-icon">&#128176;</div><div class="h-label">协议价低于平台15%</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128197;</div><div class="h-label">灵活退改</div></div>
+            <div class="highlight-item"><div class="h-icon">&#127775;</div><div class="h-label">中高端酒店</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128179;</div><div class="h-label">正规发票</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>合作酒店档次</h3>
+          <div class="package-card">
+            <h4>商务型</h4>
+            <div class="p-price">￥280-500<span>/晚</span></div>
+            <ul class="package-features">
+              <li>全季/亚朵/如家精选级别</li><li>含早、发票、灵活退改</li>
+            </ul>
+          </div>
+          <div class="package-card featured">
+            <div class="package-badge">热门</div>
+            <h4>高端型</h4>
+            <div class="p-price">￥500-1200<span>/晚</span></div>
+            <ul class="package-features">
+              <li>希尔顿/万豪/洲际级别</li><li>协议价低于OTA平台15%-20%</li><li>含行政酒廊、接送协调</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detail-cta">
+        <button class="btn btn-secondary" onclick="closeDetail()">返回</button>
+        <button class="btn btn-primary" onclick="detailToBook('hotel')">立即预订酒店</button>
+      </div>
+    </div>
+
+    <!-- ===== 3. Banquet ===== -->
+    <div class="detail-content" id="detail-banquet">
+      <div class="detail-hero">
+        <div class="d-icon">&#127860;</div>
+        <h2>商务宴请场地</h2>
+        <p class="d-sub">包房预定、菜单定制、KTV/会所，一条龙安排妥当</p>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>服务亮点</h3>
+          <div class="highlight-list">
+            <div class="highlight-item"><div class="h-icon">&#127869;</div><div class="h-label">包房预订</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128221;</div><div class="h-label">菜单定制</div></div>
+            <div class="highlight-item"><div class="h-icon">&#127925;</div><div class="h-label">KTV包厢</div></div>
+            <div class="highlight-item"><div class="h-icon">&#127867;</div><div class="h-label">酒水安排</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>场景套餐</h3>
+          <div class="package-card">
+            <h4>商务便餐</h4>
+            <div class="p-price">￥800<span>/桌起</span></div>
+            <ul class="package-features">
+              <li>4-6人包房</li><li>本地特色菜搭配</li><li>场地预订、无需排队</li>
+            </ul>
+          </div>
+          <div class="package-card featured">
+            <div class="package-badge">推荐</div>
+            <h4>正式宴请</h4>
+            <div class="p-price">￥2000<span>/桌起</span></div>
+            <ul class="package-features">
+              <li>8-12人豪华包房</li><li>定制菜单+酒水搭配</li><li>餐后KTV包厢安排</li><li>全程管家协调</li>
+            </ul>
+          </div>
+          <div class="package-card">
+            <h4>全套接待</h4>
+            <div class="p-price">￥5000<span>/场起</span></div>
+            <ul class="package-features">
+              <li>接机+宴请+娱乐+送机</li><li>专属接待顾问</li><li>发票齐全、合规报销</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detail-cta">
+        <button class="btn btn-secondary" onclick="closeDetail()">返回</button>
+        <button class="btn btn-primary" onclick="detailToBook('banquet')">立即预约宴请</button>
+      </div>
+    </div>
+
+    <!-- ===== 4. Reception ===== -->
+    <div class="detail-content" id="detail-reception">
+      <div class="detail-hero">
+        <div class="d-icon">&#128188;</div>
+        <h2>企业接待外包</h2>
+        <p class="d-sub">把接待这件事外包给我们，您只管谈生意</p>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>服务亮点</h3>
+          <div class="highlight-list">
+            <div class="highlight-item"><div class="h-icon">&#128101;</div><div class="h-label">专属接待管家</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128197;</div><div class="h-label">月度/季度套餐</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128179;</div><div class="h-label">正规发票报销</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128196;</div><div class="h-label">签正式合同</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>套餐选择</h3>
+          <div class="package-card">
+            <h4>基础版</h4>
+            <div class="p-price">￥3,000<span>/月</span></div>
+            <ul class="package-features">
+              <li>每月3次接待服务</li><li>接送机/酒店/宴请安排</li><li>专属接待顾问对接</li>
+            </ul>
+          </div>
+          <div class="package-card featured">
+            <div class="package-badge">最受欢迎</div>
+            <h4>标准版</h4>
+            <div class="p-price">￥6,000<span>/月</span></div>
+            <ul class="package-features">
+              <li>每月8次接待服务</li><li>含全套商务接待</li><li>紧急调度优先响应</li><li>月度接待报告</li>
+            </ul>
+          </div>
+          <div class="package-card">
+            <h4>企业版</h4>
+            <div class="p-price">￥12,000<span>/月</span></div>
+            <ul class="package-features">
+              <li>不限次接待服务</li><li>7x24小时响应</li><li>多城市地接协调</li><li>季度复盘优化方案</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detail-cta">
+        <button class="btn btn-secondary" onclick="closeDetail()">返回</button>
+        <button class="btn btn-primary" onclick="detailToBook('reception')">立即咨询套餐</button>
+      </div>
+    </div>
+
+    <!-- ===== 5. Travel ===== -->
+    <div class="detail-content" id="detail-travel">
+      <div class="detail-hero">
+        <div class="d-icon">&#127905;</div>
+        <h2>景区 / 团建地接</h2>
+        <p class="d-sub">门票代订、包车出行、团队用餐，本地资源一站搞定</p>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>服务亮点</h3>
+          <div class="highlight-list">
+            <div class="highlight-item"><div class="h-icon">&#127915;</div><div class="h-label">门票代订</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128652;</div><div class="h-label">包车出行</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128483;</div><div class="h-label">导游安排</div></div>
+            <div class="highlight-item"><div class="h-icon">&#127869;</div><div class="h-label">团队用餐</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>服务内容</h3>
+          <div class="package-card">
+            <h4>景区地接</h4>
+            <div class="p-price">门票代订 · 免排队</div>
+            <ul class="package-features">
+              <li>热门景区门票代订，部分免排队通道</li><li>本地特色餐饮推荐+预订</li><li>包车往返接送</li>
+            </ul>
+          </div>
+          <div class="package-card featured">
+            <div class="package-badge">推荐</div>
+            <h4>企业团建全包</h4>
+            <div class="p-price">￥300<span>/人起</span></div>
+            <ul class="package-features">
+              <li>团建场地预订</li><li>往返包车+用餐安排</li><li>活动策划+物料准备</li><li>全程地接协调</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detail-cta">
+        <button class="btn btn-secondary" onclick="closeDetail()">返回</button>
+        <button class="btn btn-primary" onclick="detailToBook('travel')">立即预约地接</button>
+      </div>
+    </div>
+
+    <!-- ===== 6. Fleet ===== -->
+    <div class="detail-content" id="detail-fleet">
+      <div class="detail-hero">
+        <div class="d-icon">&#128663;</div>
+        <h2>车队后市场服务</h2>
+        <p class="d-sub">保养维修、保险续保、二手车置换，渠道价更省</p>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>服务亮点</h3>
+          <div class="highlight-list">
+            <div class="highlight-item"><div class="h-icon">&#128295;</div><div class="h-label">保养维修</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128176;</div><div class="h-label">保险续保</div></div>
+            <div class="highlight-item"><div class="h-icon">&#128664;</div><div class="h-label">二手车置换</div></div>
+            <div class="highlight-item"><div class="h-icon">&#127973;</div><div class="h-label">合作修理厂</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <h3>服务内容</h3>
+          <div class="package-card featured">
+            <div class="package-badge">渠道价</div>
+            <h4>保养维修对接</h4>
+            <div class="p-price">渠道价<span> · 省心</span></div>
+            <ul class="package-features">
+              <li>对接本地优质汽修厂，享受渠道优惠价</li><li>出租车/网约车司机专属保养套餐</li><li>维修期间提供代步车协调</li>
+            </ul>
+          </div>
+          <div class="package-card">
+            <h4>保险续保</h4>
+            <div class="p-price">佣金返现<span> · 更划算</span></div>
+            <ul class="package-features">
+              <li>多家保险公司比价</li><li>司机意外险/三者险专属方案</li><li>续保提醒、理赔协助</li>
+            </ul>
+          </div>
+          <div class="package-card">
+            <h4>二手车置换</h4>
+            <div class="p-price">车源对接<span> · 透明交易</span></div>
+            <ul class="package-features">
+              <li>车队批量采购对接</li><li>个人车辆置换评估</li><li>手续代办、过户协助</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detail-cta">
+        <button class="btn btn-secondary" onclick="closeDetail()">返回</button>
+        <button class="btn btn-primary" onclick="detailToBook('fleet')">立即咨询</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOOKING MODAL ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">预约接待服务</h2>
+      <button class="modal-close" onclick="closeBooking()">&times;</button>
+    </div>
+    
+    <!-- Step indicators -->
+    <div class="steps" id="stepIndicator">
+      <div class="step-dot active" id="dot1">1</div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2">2</div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3">3</div>
+    </div>
+
+    <!-- Step 1: Choose service -->
+    <div class="step-content active" id="step1">
+      <p style="font-size:14px;color:#888;margin-bottom:16px;">选择您需要的服务类型（可多选）</p>
+      <div class="svc-option" data-svc="airport" onclick="toggleSvc(this)">
+        <span class="svc-name">&#9992; 接送机/接送站</span>
+        <span class="svc-price">￥200起</span>
+      </div>
+      <div class="svc-option" data-svc="hotel" onclick="toggleSvc(this)">
+        <span class="svc-name">&#127968; 酒店预订</span>
+        <span class="svc-price">协议价</span>
+      </div>
+      <div class="svc-option" data-svc="banquet" onclick="toggleSvc(this)">
+        <span class="svc-name">&#127860; 商务宴请场地</span>
+        <span class="svc-price">￥800起</span>
+      </div>
+      <div class="svc-option" data-svc="reception" onclick="toggleSvc(this)">
+        <span class="svc-name">&#128188; 企业接待外包（月度）</span>
+        <span class="svc-price">￥3000/月起</span>
+      </div>
+      <div class="btn-row">
+        <div></div>
+        <button class="btn btn-primary" onclick="goStep(2)">下一步 &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Fill details -->
+    <div class="step-content" id="step2">
+      <div class="form-group">
+        <label>您的称呼 *</label>
+        <input type="text" id="custName" placeholder="如：张总 / 李先生">
+      </div>
+      <div class="form-group">
+        <label>手机号码 *</label>
+        <input type="tel" id="custPhone" placeholder="方便我们联系您">
+      </div>
+      <div class="form-group">
+        <label>接待日期</label>
+        <input type="date" id="custDate">
+      </div>
+      <div class="form-group">
+        <label>接待人数</label>
+        <select id="custPeople">
+          <option>1-2人</option>
+          <option>3-5人</option>
+          <option>6-10人</option>
+          <option>10人以上</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>具体需求描述</label>
+        <textarea id="custDesc" placeholder="如：12月3日下午接机，需要一辆GL8，送到XX酒店，晚上安排一个包房宴请，8人左右..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(1)">&larr; 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(3)">下一步 &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Confirm & submit -->
+    <div class="step-content" id="step3">
+      <p style="font-size:14px;color:#888;margin-bottom:12px;">请确认您的预约信息</p>
+      <div class="confirm-card">
+        <h4>预约摘要</h4>
+        <div class="confirm-row"><span class="label">选择服务</span><span class="val" id="summarySvc">-</span></div>
+        <div class="confirm-row"><span class="label">联系人</span><span class="val" id="summaryName">-</span></div>
+        <div class="confirm-row"><span class="label">手机号</span><span class="val" id="summaryPhone">-</span></div>
+        <div class="confirm-row"><span class="label">接待日期</span><span class="val" id="summaryDate">-</span></div>
+        <div class="confirm-row"><span class="label">人数</span><span class="val" id="summaryPeople">-</span></div>
+        <div class="confirm-total">
+          <span>预计响应时间</span>
+          <span style="color:#c9a96e;">30分钟内</span>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#aaa;text-align:center;margin-bottom:16px;">
+        提交后我们的接待顾问会在30分钟内电话联系您，确认细节并报价
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(2)">&larr; 上一步</button>
+        <button class="btn btn-primary" onclick="submitBooking()">确认提交</button>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div class="step-content" id="stepSuccess" style="text-align:center;padding:48px 24px;">
+      <div style="font-size:56px;margin-bottom:16px;">&#9989;</div>
+      <h3 style="font-size:20px;color:#1a1a2e;margin-bottom:8px;">预约已提交！</h3>
+      <p style="font-size:14px;color:#888;margin-bottom:24px;">
+        我们的接待顾问将在 <strong>30分钟内</strong><br>通过电话与您联系确认细节
+      </p>
+      <p style="font-size:13px;color:#aaa;">如需紧急联系，请拨打：<strong style="color:#c9a96e;">138-xxxx-xxxx</strong></p>
+      <div style="margin-top:24px;">
+        <button class="btn btn-primary" style="width:auto;padding:12px 40px;" onclick="closeBooking()">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <p>驿路通商务服务有限公司 | 正规合同 · 可开发票 · 全程保障</p>
+  <p style="opacity:0.6;margin-top:8px;">© 2026 驿路通 · 让每一次接待都成为加分项</p>
+</footer>
+
+<script>
+let currentStep = 1;
+let selectedSvcs = new Set();
+
+// ===== Detail Modal =====
+function openDetail(svc) {
+  document.querySelectorAll('.detail-content').forEach(el => el.style.display = 'none');
+  document.getElementById('detail-' + svc).style.display = 'block';
+  document.getElementById('detailOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function detailToBook(svc) {
+  closeDetail();
+  openBooking();
+  selectedSvcs.clear();
+  selectedSvcs.add(svc);
+  document.querySelectorAll('.svc-option').forEach(el => {
+    el.classList.toggle('selected', el.dataset.svc === svc);
+  });
+  goStep(2);
+}
+
+// Close detail on overlay click
+document.getElementById('detailOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDetail();
+});
+
+// ===== Booking Modal =====
+function openBooking() {
+  document.getElementById('modalOverlay').classList.add('active');
+  resetForm();
+}
+
+function closeBooking() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function toggleSvc(el) {
+  el.classList.toggle('selected');
+  const svc = el.dataset.svc;
+  if (el.classList.contains('selected')) {
+    selectedSvcs.add(svc);
+  } else {
+    selectedSvcs.delete(svc);
+  }
+}
+
+function goStep(step) {
+  if (step === 2 && selectedSvcs.size === 0) {
+    alert('请至少选择一项服务');
+    return;
+  }
+  if (step === 3) {
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    if (!name) { alert('请填写您的称呼'); return; }
+    if (!phone) { alert('请填写手机号码'); return; }
+  }
+
+  currentStep = step;
+  
+  // Update step indicators
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('dot'+i);
+    dot.classList.remove('active', 'done');
+    if (i < step) dot.classList.add('done');
+    if (i === step) dot.classList.add('active');
+  }
+  document.getElementById('line1').classList.toggle('done', step > 1);
+  document.getElementById('line2').classList.toggle('done', step > 2);
+
+  // Show correct content
+  document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+  const targetEl = document.getElementById('step'+step);
+  if (targetEl) targetEl.classList.add('active');
+  document.getElementById('modalTitle').textContent = step === 1 ? '选择服务' : step === 2 ? '填写需求' : '确认预约';
+
+  // Populate summary in step 3
+  if (step === 3) {
+    const svcNames = {
+      airport: '接送机/接送站', hotel: '酒店预订', banquet: '商务宴请场地',
+      reception: '企业接待外包', travel: '景区/团建地接', fleet: '车队后市场服务'
+    };
+    const names = [...selectedSvcs].map(s => svcNames[s] || s).join('、');
+    document.getElementById('summarySvc').textContent = names || '-';
+    document.getElementById('summaryName').textContent = document.getElementById('custName').value;
+    document.getElementById('summaryPhone').textContent = document.getElementById('custPhone').value;
+    document.getElementById('summaryDate').textContent = document.getElementById('custDate').value || '未指定';
+    document.getElementById('summaryPeople').textContent = document.getElementById('custPeople').value;
+  }
+}
+
+function submitBooking() {
+  document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('stepSuccess').classList.add('active');
+  // Hide step indicators on success
+  document.getElementById('stepIndicator').style.display = 'none';
+  document.getElementById('modalTitle').textContent = '预约成功';
+}
+
+function resetForm() {
+  currentStep = 1;
+  selectedSvcs.clear();
+  document.querySelectorAll('.svc-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('custDate').value = '';
+  document.getElementById('custPeople').value = '1-2人';
+  document.getElementById('custDesc').value = '';
+  document.getElementById('stepIndicator').style.display = 'flex';
+  
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('dot'+i);
+    dot.classList.remove('active', 'done');
+    if (i === 1) dot.classList.add('active');
+  }
+  document.getElementById('line1').classList.remove('done');
+  document.getElementById('line2').classList.remove('done');
+  
+  document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('modalTitle').textContent = '预约接待服务';
+}
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeBooking();
+});
+</script>
+
+</body>
+</html>
